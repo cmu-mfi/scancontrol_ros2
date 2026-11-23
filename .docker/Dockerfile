@@ -64,3 +64,25 @@ RUN --mount=type=bind,from=build_stage,source=/library_pkgs,target=/library_pkgs
     apt-get install -y --no-install-recommends /library_pkgs/mescan_${SCANCONTROL_SDK_VERSION}-1_amd64.deb && \
     apt-get install -y --no-install-recommends /library_pkgs/llt_${SCANCONTROL_SDK_VERSION}-1_amd64.deb \
     && rm -rf /var/lib/apt/lists/*
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      python3-colcon-common-extensions \
+      python3-rosdep \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /ros_ws
+COPY micro_epsilon_scancontrol_driver ./src/micro_epsilon_scancontrol_driver
+COPY micro_epsilon_scancontrol_description ./src/micro_epsilon_scancontrol_description
+COPY micro_epsilon_scancontrol_msgs ./src/micro_epsilon_scancontrol_msgs
+
+RUN apt-get update && \
+    rosdep update && \
+    rosdep install --from-paths src --ignore-src -r -y && \
+    . /opt/ros/${ROS_DISTRO}/setup.sh && \
+    colcon build
+
+RUN printf '#!/bin/bash\nsource /opt/ros/%s/setup.bash\nsource /ros_ws/install/setup.bash\nexec "$@"\n' "${ROS_DISTRO}" > /ros_entrypoint.sh && \
+    chmod +x /ros_entrypoint.sh
+
+ENTRYPOINT ["/ros_entrypoint.sh"]
+CMD ["ros2", "launch", "micro_epsilon_scancontrol_driver", "load_driver.launch"]

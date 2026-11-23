@@ -1,0 +1,16 @@
+services:
+  scancontrol:
+    network_mode: host
+    build:
+      context: .
+      dockerfile: .docker/Dockerfile
+    stdin_open: true
+    environment:
+      - DISPLAY=${DISPLAY}
+      - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+      - ROS_DOMAIN_ID=19
+      - FRAME_ID=scancontrol
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    tty: true
+    command: ["ros2", "launch", "micro_epsilon_scancontrol_driver", "load_driver.launch", "frame_id:=${FRAME_ID:-scancontrol}"]

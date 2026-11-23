@@ -40,10 +40,30 @@ colcon build [--merge-install] [--symlink-install]
 
 ## Usage
 
-Run the main driver node with:
+### Run with Docker
+
+The Docker image installs the scanCONTROL SDK, builds the ROS packages, and starts the driver through Docker Compose. From the repository root, build the image and start the driver with:
+
 ```bash
-ros2 launch micro_epsilon_scancontrol_driver load_driver.launch
+docker compose up --build
 ```
+
+Keep this terminal open to view the driver logs. The container uses host networking and `ROS_DOMAIN_ID=19`, so connect the scanCONTROL sensor to the host network and use the same ROS domain ID for ROS 2 tools on the host. To override the point cloud frame ID, set `FRAME_ID` when starting the service:
+
+```bash
+FRAME_ID=scancontrol docker compose up --build
+```
+
+In another terminal on the host, source the matching ROS 2 installation and inspect the published point cloud:
+
+```bash
+source /opt/ros/jazzy/setup.bash
+export ROS_DOMAIN_ID=19
+ros2 topic list
+ros2 topic echo /scancontrol_pointcloud --once
+```
+
+Stop the driver with `Ctrl+C` in the Compose terminal, or run `docker compose down` from the repository root.
 
 ## Launch files
 
